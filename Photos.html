@@ -1,0 +1,146 @@
+<html>
+  <head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.5.3/vue.min.js"></script>
+    <script src=".files.js"></script>
+    <style>
+      @page {
+        size: A4;
+        margin: 1cm;  
+      }
+      html, body {
+        width: 210mm;
+        max-width: 210mm;
+        margin: 1cm;
+        font-family: 'Open Sans', sans-serif;
+        text-transform: uppercase;
+      }
+      .table {
+        display: table;
+        border-collapse: collapse;
+      }
+      .table:not(first-child) {
+        margin-top: 2cm;
+      }
+      .table:not(last-child) {
+        page-break-before: always;
+      }
+      .row {
+        display: table-row;
+      }
+      .wrapper {
+        width: 5cm;
+        height: 5cm;
+        padding: 3mm;
+        display: table-cell;
+        border: 1px dashed black;
+        color: #69BD45;
+      }
+      .photo {
+        margin-left: auto;
+        margin-right: auto;
+        height: 5cm;
+        width: 5cm;
+        display:flex;
+        justify-content:center;
+        align-items:center;
+      }
+      .photo img {
+        object-fit: contain;
+        height: 95%;
+        width: 95%;
+      }
+      .name {
+        padding-top: 3mm;
+        font-size: 25px;
+        text-align: center;
+      }
+      .print {
+        display: inline-block;
+        font-size: 50px;
+        padding-bottom: 40px;
+      }
+      @media print {
+        .print {
+          display: none;
+        }
+      }
+      @media screen {
+        body {
+          overflow: hidden;
+        }
+        .table {
+          opacity: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <template v-if="!photos.length">
+        <h2>No photos were detected!</h2>
+        <p>Add some photos to the "Photos" folder, with the filenames being their preferred names, and then open (run) the "Create Photo Cards" file (script) again.</p>
+      </template>
+      <template v-else>
+        <a href="#" @click="print" class="print">Print</a>
+        <div v-for="(x,table) in tables" class="table" role="table">
+          <div v-for="(y,row) in rowsPerPage" class="row" role="row">
+            <div v-for="photo in getPhotos(table, row)" role="cell" class="wrapper">
+              <div class="photo">
+                <img :src="`Photos/${photo}`"/>
+              </div>
+              <div class="name" ref="name">
+                <span>{{ photo.replace(/^([^\.\-\_\s\d]+).+/, '$1') }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+    </div>
+
+    <script>
+      new Vue({
+        el: '#app',
+        data() {
+          return {
+            photos: [],
+            photosPerRow: 3,
+            rowsPerPage: 4,
+          };
+        },
+        mounted() {
+          this.photos = files
+            .trim()
+            .split(/\r?\n/)
+            .filter(
+              file => (/\.(gif|jpe?g|tiff?|png|webp|bmp)$/i).test(file)
+            );
+
+          this.$nextTick(this.print);
+        },
+        computed: {
+          rows() {
+            return Math.ceil(this.photos.length / this.rowsPerPage);
+          },
+          tables() {
+            return Math.ceil(this.rows / this.photosPerRow);
+          },
+        },
+        methods: {
+          getPhotos(table, row) {
+            let startIndex = (table * this.photosPerRow * this.rowsPerPage) + (row * this.photosPerRow);
+            let endIndex = startIndex + this.photosPerRow;
+            return this.photos.slice(startIndex, endIndex);
+          },
+          print() {
+            if (this.photos.length) {
+              window.print();
+            }
+          },
+        }
+      });
+    </script>
+  </body>
+</html>
